@@ -11,6 +11,8 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 class LrcView@JvmOverloads constructor(
     context: Context,
@@ -38,10 +40,10 @@ class LrcView@JvmOverloads constructor(
     private val mNormalRowColor = Color.WHITE
     private val mSeekLineColor = Color.CYAN
     private val mSeekLineTextColor = Color.CYAN
-    private var mSeekLineTextSize = 15
-    private val mMinSeekLineTextSize = 13
-    private val mMaxSeekLineTextSize = 18
-    private var mLrcFontSize = 10// font size of lrc
+    private var mSeekLineTextSize = 18
+    private val mMinSeekLineTextSize = 18
+    private val mMaxSeekLineTextSize = 22
+    private var mLrcFontSize = 35// font size of lrc
 
     private val mMinLrcFontSize = 15
     private val mMaxLrcFontSize = 30
@@ -58,7 +60,7 @@ class LrcView@JvmOverloads constructor(
 
     init{
         mPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-        mPaint!!.textSize = 11F
+        mPaint!!.textSize = 25F
     }
 
     override fun setListener(l: ILrcView.LrcViewListener?) {
@@ -76,7 +78,7 @@ class LrcView@JvmOverloads constructor(
             if (mLoadingLrcTip != null) {
                 // draw tip when no lrc.
                 mPaint!!.color = mHignlightRowColor
-                mPaint!!.textSize = 11F
+                mPaint!!.textSize = 25F
                 mPaint!!.textAlign = Align.CENTER
                 canvas.drawText(
                     mLoadingLrcTip!!, (width / 2).toFloat(), (height / 2 - mLrcFontSize).toFloat(),
@@ -97,7 +99,7 @@ class LrcView@JvmOverloads constructor(
         val highlightText = mLrcRows!![mHignlightRow].content
         val highlightRowY = height / 2 - mLrcFontSize
         mPaint!!.color = mHignlightRowColor
-        mPaint!!.textSize = 11F
+        mPaint!!.textSize = 25F
         mPaint!!.textAlign = Align.CENTER
         canvas.drawText(highlightText!!, rowX.toFloat(), highlightRowY.toFloat(), mPaint!!)
         if (mDisplayMode == DISPLAY_MODE_SEEK) {
@@ -121,7 +123,7 @@ class LrcView@JvmOverloads constructor(
 
         // 2 above rows
         mPaint!!.color = mNormalRowColor
-        mPaint!!.textSize = 11F
+        mPaint!!.textSize = 25F
         mPaint!!.textAlign = Align.CENTER
         rowNum = mHignlightRow - 1
         rowY = highlightRowY - mPaddingY - mLrcFontSize
@@ -231,7 +233,7 @@ class LrcView@JvmOverloads constructor(
             return
         }
         mDisplayMode = DISPLAY_MODE_SEEK
-        val rowOffset = Math.abs(offsetY.toInt() / mLrcFontSize) // highlight row offset.
+        val rowOffset = abs(offsetY.toInt() / mLrcFontSize) // highlight row offset.
         Log.d(
             TAG,
             "move new hightlightrow : $mHignlightRow offsetY: $offsetY rowOffset:$rowOffset"
@@ -243,8 +245,8 @@ class LrcView@JvmOverloads constructor(
             // finger move down
             mHignlightRow -= rowOffset
         }
-        mHignlightRow = Math.max(0, mHignlightRow)
-        mHignlightRow = Math.min(mHignlightRow, mLrcRows!!.size - 1)
+        mHignlightRow = max(0, mHignlightRow)
+        mHignlightRow = mHignlightRow.coerceAtMost(mLrcRows!!.size - 1)
         if (rowOffset > 0) {
             mLastMotionY = y
             invalidate()
@@ -261,10 +263,10 @@ class LrcView@JvmOverloads constructor(
     private fun setNewFontSize(scaleSize: Int) {
         mLrcFontSize += scaleSize
         mSeekLineTextSize += scaleSize
-        mLrcFontSize = Math.max(mLrcFontSize, mMinLrcFontSize)
-        mLrcFontSize = Math.min(mLrcFontSize, mMaxLrcFontSize)
-        mSeekLineTextSize = Math.max(mSeekLineTextSize, mMinSeekLineTextSize)
-        mSeekLineTextSize = Math.min(mSeekLineTextSize, mMaxSeekLineTextSize)
+        mLrcFontSize = max(mLrcFontSize, mMinLrcFontSize)
+        mLrcFontSize = min(mLrcFontSize, mMaxLrcFontSize)
+        mSeekLineTextSize = max(mSeekLineTextSize, mMinSeekLineTextSize)
+        mSeekLineTextSize = min(mSeekLineTextSize, mMaxSeekLineTextSize)
     }
 
     // get font scale offset
@@ -274,8 +276,8 @@ class LrcView@JvmOverloads constructor(
         val y0 = event.getY(0)
         val x1 = event.getX(1)
         val y1 = event.getY(1)
-        var maxOffset: Float // max offset between x or y axis,used to decide scale size
-        var zoomin: Boolean
+        val maxOffset: Float // max offset between x or y axis,used to decide scale size
+        val zoomin: Boolean
         val oldXOffset = abs(mPointerOneLastMotion.x - mPointerTwoLastMotion.x)
         val newXoffset = abs(x1 - x0)
         val oldYOffset = abs(mPointerOneLastMotion.y - mPointerTwoLastMotion.y)
